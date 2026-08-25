@@ -1,0 +1,24 @@
+# Exemplo de deploy do QDevice (corosync-qnetd) — ajuste ao seu ambiente.
+# Swarm NAO builda: use a imagem publicada no GHCR (via CI release-and-build).
+version: "3.8"
+
+services:
+  qnetd:
+    image: ghcr.io/marcelofmatos/corosync-qnetd:1
+    volumes:
+      - qnetd-nssdb:/etc/corosync/qnetd        # PERSISTE a CA/certs (essencial)
+    ports:
+      - target: 5403
+        published: 5403
+        protocol: tcp
+        mode: host          # publica no IP do no onde roda (sem ingress mesh)
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager   # fixa no manager p/ o volume local persistir no mesmo no
+      restart_policy:
+        condition: any
+
+volumes:
+  qnetd-nssdb:
